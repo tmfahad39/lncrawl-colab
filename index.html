@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>lncrawl Server on Colab — Port 7860</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#0b1020;color:#e5e7eb;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:32px 16px 80px}
+h1{font-size:26px}.sub{color:#9ca3af}
+.card{background:#ffffff0d;border:1px solid #ffffff1f;border-radius:16px;padding:18px;margin:14px 0}
+pre{background:#00000066;border:1px solid #ffffff1f;border-radius:12px;padding:14px;overflow:auto;font-size:13px}
+code{color:#a5f3fc}.warn{background:#f59e0b18;border:1px solid #f59e0b55;border-radius:12px;padding:12px;margin:12px 0}
+.badge{display:inline-block;background:linear-gradient(90deg,#7c3aed,#06b6d4);padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700}
+</style></head>
+<body><div class="wrap">
+<span class="badge">Google Colab • lncrawl • port 7860</span>
+<h1>📚 LightNovel Crawler — Colab Server</h1>
+<p class="sub">Paste the cell below into Colab and run. Default login <code>admin / admin</code>.</p>
+<div class="card"><h2>0. Install first (one-time cell)</h2>
+<pre><code>!pip -q install lncrawl</code></pre></div>
+<div class="card"><h2>1. Start server cell</h2>
+<pre><code># @markdown &lt;font size=5 color="yellow"&gt; ⬅️ Click Here to start the server&lt;/font&gt;
+import subprocess, threading, time, socket
+
+PORT = 7860
+
+proc = subprocess.Popen(
+    ["python", "-m", "lncrawl", "-ll", "server", "--host", "0.0.0.0", "--port", str(PORT)],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+)
+
+def consume_logs():
+    for _ in proc.stdout:
+        pass
+threading.Thread(target=consume_logs, daemon=True).start()
+
+def is_port_open(port, host="127.0.0.1"):
+    try:
+        with socket.create_connection((host, port), timeout=1):
+            return True
+    except OSError:
+        return False
+
+# Wait until port is actually open (max 60s)
+steps = ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"]
+i = 0
+for _ in range(120):
+    print(f"\r{steps[i % len(steps)]} Starting lncrawl server...", end="", flush=True)
+    if is_port_open(PORT):
+        break
+    time.sleep(0.5)
+    i += 1
+else:
+    print("\r❌ Server failed to start. Check if port is in use.")
+    proc.kill()
+    raise SystemExit
+
+from google.colab.output import eval_js
+url = eval_js(f"google.colab.kernel.proxyPort({PORT})")
+
+print("\r" + " " * 40)
+print("━" * 50)
+print("  📚  LightNovel Crawler — Server Ready")
+print("━" * 50)
+print(f"  🌐  URL   : {url}")
+print(f"  👤  User  : admin")
+print(f"  🔑  Pass  : admin")
+print("━" * 50)
+print("  ⚠️  Session ends when Colab disconnects. KEEP THIS TAB OPEN UNTIL YOU FINISH!!")
+print("━" * 50)</code></pre></div>
+<div class="warn">⚠️ Keep the Colab tab open — closing it kills the server. Change <code>admin/admin</code> if exposed publicly.</div>
+</div></body></html>
